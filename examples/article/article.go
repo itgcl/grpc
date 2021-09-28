@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	pb "grpc/proto"
+	pb "grpc/examples/proto"
 )
 
 type Service struct {
@@ -33,7 +33,7 @@ func (s Service) CreateArticle(ctx context.Context, req *pb.RequestCreateArticle
 	if err != nil {
 		return nil, err
 	}
-	return &pb.ReplyCreateArticle{ArticleId:1}, nil
+	return &pb.ReplyCreateArticle{ArticleId: 1}, nil
 }
 
 func (s Service) UpdateArticle(ctx context.Context, req *pb.RequestUpdateArticle) (*emptypb.Empty, error) {

@@ -6,13 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"grpc/examples"
-	pb "grpc/proto"
+	pb "grpc/examples/proto"
 	"testing"
 )
 //var articleClient pb.ArticleServiceClient
 func NewClient() (pb.ArticleServiceClient, error) {
 	ctx := context.Background()
-	articleCoon, err := grpc.DialContext(ctx, examples.Address, grpc.WithInsecure())
+	// 指定自定义认证
+	var opts []grpc.DialOption
+	// 开启安全的选项
+	opts = append(opts,grpc.WithInsecure())
+	// token验证
+	opts = append(opts, grpc.WithPerRPCCredentials(new(customerTokenAuth)))
+	// 连接rpc
+	articleCoon, err := grpc.DialContext(ctx, examples.Address, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -21,6 +28,23 @@ func NewClient() (pb.ArticleServiceClient, error) {
 	articleClient := pb.NewArticleServiceClient(articleCoon)
 	return  articleClient, nil
 }
+
+type customerTokenAuth  struct{}
+
+// 实现interface接口 是否开启传输安全 TLS
+func (c customerTokenAuth) RequireTransportSecurity() bool {
+	return false
+}
+
+// 获取元数据
+func (c customerTokenAuth) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{
+		"appId":  examples.AppId,
+		"appKey": examples.AppKey,
+	}, nil
+}
+
+
 
 func TestCreateArticle(t *testing.T) {
 	c, err := NewClient()
@@ -47,24 +71,24 @@ func TestUpdateArticle(t *testing.T)  {
 	// failed
 	{
 		_, err := c.UpdateArticle(context.Background(), &pb.RequestUpdateArticle{
-			ArticleId:2,
-			Title:   "ww",
-			Content: "123456",
-			Author:  "王五",
-			IsShow:  false,
-			Type:    pb.Type_novel,
+			ArticleId: 2,
+			Title:     "ww",
+			Content:   "123456",
+			Author:    "王五",
+			IsShow:    false,
+			Type:      pb.Type_novel,
 		})
 		assert.NotEqual(t, nil, err)
 	}
 	// pass
 	{
 		_, err := c.UpdateArticle(context.Background(), &pb.RequestUpdateArticle{
-			ArticleId:1,
-			Title:   "ww",
-			Content: "123456",
-			Author:  "王五",
-			IsShow:  false,
-			Type:    pb.Type_novel,
+			ArticleId: 1,
+			Title:     "ww",
+			Content:   "123456",
+			Author:    "王五",
+			IsShow:    false,
+			Type:      pb.Type_novel,
 		})
 		assert.Equal(t, nil, err)
 	}
